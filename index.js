@@ -8,7 +8,11 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 app.use(cors({
-  origin: ['http://localhost:5173'],
+  origin: [
+    'http://localhost:5173',
+    'https://my-projects-87318.web.app',
+    'https://my-projects-87318.firebaseapp.com'
+  ],
   credentials: true
 }));
 app.use(express.json());
@@ -22,22 +26,22 @@ const logger = (req, res, next) => {
 }
 
 const verifyToken = (req, res, next) => {
-  const token = req?.cookies?.token;  
+  const token = req?.cookies?.token;
   //if there's no token
-  if(!token){
-    return res.status(401).send({message: "Unauthorized Access"});
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized Access" });
   }
 
   jwt.verify(token, process.env.ACCESS_JWT_SECRET, (err, decoded) => {
     //if problem with parsing the token
     //it may happen because of expired or non-existent or incorrect or invalid token
-    if(err){
-      return res.status(401).send({message: "Could not verify/decode token. Unauthorized access."})
+    if (err) {
+      return res.status(401).send({ message: "Could not verify/decode token. Unauthorized access." })
     }
     //req.user = decoded;
     req.decoded = decoded;
   })
-  
+
   next();
 }
 
@@ -56,31 +60,31 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     const database = client.db('JobPortal');
     const jobsCollection = database.collection('jobs');
     const jobApplicationsCollection = database.collection('applications');
 
-   //auth related api
-   app.post('/jwt', (req, res) => {
-    const user = req.body;
-    const token = jwt.sign(user, process.env.ACCESS_JWT_SECRET, {expiresIn: '10h'});
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: false
-    }).send({success: true});
-   })
+    //auth related api
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_JWT_SECRET, { expiresIn: '10h' });
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: false
+      }).send({ success: true });
+    })
 
-   app.post('/logout', (req, res) => {
-    res.clearCookie('token', {
-      httpOnly: true,
-      secure: false
-    }).send({success: true});
-   })
+    app.post('/logout', (req, res) => {
+      res.clearCookie('token', {
+        httpOnly: true,
+        secure: false
+      }).send({ success: true });
+    })
 
     //jobs related apis
     app.get('/jobs', async (req, res) => {
@@ -115,8 +119,8 @@ async function run() {
       //each token will be only for that specified user, by using a valid token one cannot get another user's data
       //forbidden
       //this can also ensure for example, a normal user can't get access to the resources that an admin can use
-      if(req.decoded.email !== email){
-        return res.status(403).send({message: "Forbidden Access"});
+      if (req.decoded.email !== email) {
+        return res.status(403).send({ message: "Forbidden Access" });
       }
 
       //cookie parser automatically sets cookie to all requests from the client side
