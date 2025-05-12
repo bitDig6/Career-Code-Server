@@ -22,8 +22,7 @@ const logger = (req, res, next) => {
 }
 
 const verifyToken = (req, res, next) => {
-  const token = req?.cookies?.token;
-  
+  const token = req?.cookies?.token;  
   //if there's no token
   if(!token){
     return res.status(401).send({message: "Unauthorized Access"});
@@ -66,15 +65,22 @@ async function run() {
     const jobsCollection = database.collection('jobs');
     const jobApplicationsCollection = database.collection('applications');
 
-    //auth related api
-    app.post('/jwt', async (req, res) => {
-      const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_JWT_SECRET, {expiresIn: '1h'});
-      res.cookie('token', token, {
-        httpOnly: true,
-        secure: false
-      }).send({success: true});
-    })
+   //auth related api
+   app.post('/jwt', (req, res) => {
+    const user = req.body;
+    const token = jwt.sign(user, process.env.ACCESS_JWT_SECRET, {expiresIn: '10h'});
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: false
+    }).send({success: true});
+   })
+
+   app.post('/logout', (req, res) => {
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: false
+    }).send({success: true});
+   })
 
     //jobs related apis
     app.get('/jobs', async (req, res) => {
@@ -113,8 +119,9 @@ async function run() {
         return res.status(403).send({message: "Forbidden Access"});
       }
 
-      //cookie parser automatically sets cookie to req.cookies
+      //cookie parser automatically sets cookie to all requests from the client side
       // console.log('cookie saved: ', req.cookies);
+      //console.log('token', req.cookies.token);
 
       //I might get multiple value so must use find() and then use await and toArray
       const cursor = jobApplicationsCollection.find(query);
