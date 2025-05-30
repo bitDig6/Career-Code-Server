@@ -90,14 +90,37 @@ async function run() {
 
     //jobs related apis
     app.get('/jobs', async (req, res) => {
-      console.log('now inside get all jobs api callback')
-      const email = req.query.email;
+      //we taking the query to return all documents of which the 'email' field matches with the email in the request query
+      //we'll now make it conditional
+      //if query is email, send documents that match the email
+      //if query is a boolean value of true then send all the documents sorted by the salary range field
+      //same login goes to the search query
+      const email = req.query?.email;
+      const sort = req.query?.sort;
+      const search = req.query?.search;
       let query = {};
+      let sortQuery = {};
+      
+      //creating a query
       if (email) {
         query = { hr_email: email };
+      }    
+      if(sort == "true"){
+        sortQuery = { "salaryRange.min": -1};//-1 will sort the docs descending order
       }
-
-      const cursor = jobsCollection.find(query);
+      //if we set query inside the find method we will lose the query by email, so we are using the search query as a key on the query object
+      if(search){
+        query.location = {
+          $regex: search, $options: i
+        }
+        }
+        
+      // const query = {
+        //   location: {
+        //     $regex: search,
+        //     i: -1
+        //   }, this one is if we only searched, but for two queries, since query is an object we just add another key in the query
+      const cursor = jobsCollection.find(query).sort(sortQuery);
       const result = await cursor.toArray();
       res.send(result);
     })
