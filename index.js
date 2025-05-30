@@ -111,10 +111,10 @@ async function run() {
       //if we set query inside the find method we will lose the query by email, so we are using the search query as a key on the query object
       if(search){
         query.location = {
-          $regex: search, $options: i
+          $regex: search, $options: "i"
         }
         }
-        
+
       // const query = {
         //   location: {
         //     $regex: search,
