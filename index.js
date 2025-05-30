@@ -98,8 +98,13 @@ async function run() {
       const email = req.query?.email;
       const sort = req.query?.sort;
       const search = req.query?.search;
+      const min = req.query?.min;
+      const max = req.query?.max;
+
       let query = {};
       let sortQuery = {};
+      let minQuery = {};
+      let maxQuery = {};
       
       //creating a query
       if (email) {
@@ -107,13 +112,21 @@ async function run() {
       }    
       if(sort == "true"){
         sortQuery = { "salaryRange.min": -1};//-1 will sort the docs descending order
-      }
+      };
       //if we set query inside the find method we will lose the query by email, so we are using the search query as a key on the query object
       if(search){
         query.location = {
           $regex: search, $options: "i"
-        }
-        }
+          }
+        };
+      //look here we are not filtering data if min or max both aren't there together
+      if(min && max){
+        query = { 
+          ...query, 
+          "salaryRange.min": { $gte: parseInt(min) },
+          "salaryRange.max": { $lte: parseInt(max) }
+        };
+      };
 
       // const query = {
         //   location: {
